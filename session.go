@@ -426,12 +426,17 @@ func (session *Session) graph(path string, method Method, params Params) (res Re
 	}
 
 	var response *http.Response
-	response, err = session.sendPostRequest(graphUrl, params, &res)
-	session.addDebugInfo(res.(Result), response)
 
-	if res != nil {
-		err = res.Err()
+	res = &Result{}
+	response, err = session.sendPostRequest(graphUrl, params, res)
+
+	if res == nil {
+		res = Result{}
+		return
 	}
+
+	session.addDebugInfo(res.(*Result), response)
+	err = res.Err()
 
 	return
 }
@@ -536,7 +541,8 @@ func (session *Session) sendPostRequest(uri string, params Params, res interface
 		return response, err
 	}
 
-	err = makeResult(data, res)
+	err = makeResult(data, res.(*Result))
+
 	return response, err
 }
 
