@@ -26,27 +26,27 @@ import (
 //
 // Returns facebook graph api call result.
 // If facebook returns error in response, returns error details in res and set err.
-func (session *Session) Api(path string, method Method, params Params) (Result, error) {
+func (session *Session) Api(path string, method Method, params Params) (ResultService, error) {
 	return session.graph(path, method, params)
 }
 
 // Get is a short hand of Api(path, GET, params).
-func (session *Session) Get(path string, params Params) (Result, error) {
+func (session *Session) Get(path string, params Params) (ResultService, error) {
 	return session.Api(path, GET, params)
 }
 
 // Post is a short hand of Api(path, POST, params).
-func (session *Session) Post(path string, params Params) (Result, error) {
+func (session *Session) Post(path string, params Params) (ResultService, error) {
 	return session.Api(path, POST, params)
 }
 
 // Delete is a short hand of Api(path, DELETE, params).
-func (session *Session) Delete(path string, params Params) (Result, error) {
+func (session *Session) Delete(path string, params Params) (ResultService, error) {
 	return session.Api(path, DELETE, params)
 }
 
 // Put is a short hand of Api(path, PUT, params).
-func (session *Session) Put(path string, params Params) (Result, error) {
+func (session *Session) Put(path string, params Params) (ResultService, error) {
 	return session.Api(path, PUT, params)
 }
 
@@ -230,8 +230,9 @@ func (session *Session) User() (id string, err error) {
 		return
 	}
 
-	var result Result
-	result, err = session.Api("/me", GET, Params{"fields": "id"})
+	var tmp ResultService
+	tmp, err = session.Api("/me", GET, Params{"fields": "id"})
+	result := tmp.(Result)
 
 	if err != nil {
 		return
@@ -254,14 +255,17 @@ func (session *Session) Validate() (err error) {
 		return
 	}
 
-	var result Result
-	result, err = session.Api("/me", GET, Params{"fields": "id"})
+	// var result Result
+	// result, err = session.Api("/me", GET, Params{"fields": "id"})
+	var tmp ResultService
+	tmp, err = session.Api("/me", GET, Params{"fields": "id"})
+	result := tmp.(Result)
 
 	if err != nil {
 		return
 	}
 
-	if f := result.Get("id"); f == nil {
+	if f := result["id"]; f == nil {
 		err = fmt.Errorf("invalid access token.")
 		return
 	}
@@ -272,8 +276,10 @@ func (session *Session) Validate() (err error) {
 // Inspect Session access token.
 // Returns JSON array containing data about the inspected token.
 // See https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow/v2.2#checktoken
-func (session *Session) Inspect() (result Result, err error) {
-	if session.accessToken == "" {
+// FIX F. HOBEIN : the token used as a param is useful for mocking
+func (session *Session) Inspect(token string) (result Result, err error) {
+
+	if token == "" {
 		err = fmt.Errorf("access token is not set.")
 		return
 	}
@@ -290,10 +296,17 @@ func (session *Session) Inspect() (result Result, err error) {
 		return
 	}
 
-	result, err = session.Api("/debug_token", GET, Params{
-		"input_token":  session.accessToken,
+	// result, err = session.Api("/debug_token", GET, Params{
+	// 	"input_token":  session.accessToken,
+	// 	"access_token": appAccessToken,
+	// })
+
+	var tmp ResultService
+	tmp, err = session.Api("/debug_token", GET, Params{
+		"input_token":  token,
 		"access_token": appAccessToken,
 	})
+	result = tmp.(Result)
 
 	if err != nil {
 		return
@@ -325,6 +338,11 @@ func (session *Session) SetAccessToken(token string) {
 		session.accessToken = token
 		session.appsecretProof = ""
 	}
+}
+
+// Sets the version of the api.
+func (session *Session) SetVersion(version string) {
+	session.Version = version
 }
 
 // Check appsecret proof is enabled or not.
@@ -387,7 +405,7 @@ func (session *Session) SetDebug(debug DebugMode) DebugMode {
 	return old
 }
 
-func (session *Session) graph(path string, method Method, params Params) (res Result, err error) {
+func (session *Session) graph(path string, method Method, params Params) (res ResultService, err error) {
 	var graphUrl string
 
 	if params == nil {
@@ -409,7 +427,7 @@ func (session *Session) graph(path string, method Method, params Params) (res Re
 
 	var response *http.Response
 	response, err = session.sendPostRequest(graphUrl, params, &res)
-	session.addDebugInfo(res, response)
+	session.addDebugInfo(res.(Result), response)
 
 	if res != nil {
 		err = res.Err()
@@ -631,7 +649,7 @@ func (session *Session) getUrl(name, path string, params Params) string {
 	return buf.String()
 }
 
-func (session *Session) addDebugInfo(res Result, response *http.Response) Result {
+func (session *Session) addDebugInfo(res ResultService, response *http.Response) ResultService {
 	if session.Debug() == DEBUG_OFF || res == nil || response == nil {
 		return res
 	}
@@ -643,8 +661,8 @@ func (session *Session) addDebugInfo(res Result, response *http.Response) Result
 	debugInfo[debugProtoKey] = response.Proto
 	debugInfo[debugHeaderKey] = response.Header
 
-	res["__debug__"] = debugInfo
-	return res
+	res.Set("__debug__", debugInfo)
+	return ResultService(res)
 }
 
 func decodeBase64URLEncodingString(data string) ([]byte, error) {

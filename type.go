@@ -10,7 +10,74 @@ package facebook
 import (
 	"io"
 	"net/http"
+	"reflect"
 )
+
+type AppService interface {
+	AppAccessToken() string
+	ParseSignedRequest(signedRequest string) (res Result, err error)
+	ParseCode(code string) (token string, err error)
+	ParseCodeInfo(code, machineId string) (token string, expires int, newMachineId string, err error)
+	ExchangeToken(accessToken string) (token string, expires int, err error)
+	GetCode(accessToken string) (code string, err error)
+	Session(accessToken string) *SessionService
+	SessionFromSignedRequest(signedRequest string) (session *Session, err error)
+}
+
+type SessionService interface {
+	Api(path string, method Method, params Params) (ResultService, error)
+	Get(path string, params Params) (ResultService, error)
+	Post(path string, params Params) (ResultService, error)
+	Delete(path string, params Params) (ResultService, error)
+	Put(path string, params Params) (ResultService, error)
+	BatchApi(params ...Params) ([]Result, error)
+	Batch(batchParams Params, params ...Params) ([]Result, error)
+	FQL(query string) ([]Result, error)
+	MultiFQL(queries Params) (Result, error)
+	Request(request *http.Request) (res Result, err error)
+	User() (id string, err error)
+	Validate() (err error)
+	Inspect(token string) (result Result, err error)
+	AccessToken() string
+	SetAccessToken(token string)
+	SetVersion(version string)
+	AppsecretProof() string
+	EnableAppsecretProof(enabled bool) error
+	App() *App
+	Debug() DebugMode
+	SetDebug(debug DebugMode) DebugMode
+	// graph(path string, method Method, params Params) (res ResultService, err error)
+	// graphBatch(batchParams Params, params ...Params) ([]Result, error)
+	// graphFQL(params Params) (res Result, err error)
+	// prepareParams(params Params)
+	// sendGetRequest(uri string, res interface{}) (*http.Response, error)
+	// sendPostRequest(uri string, params Params, res interface{}) (*http.Response, error)
+	// sendOauthRequest(uri string, params Params) (Result, error)
+	// sendRequest(request *http.Request) (response *http.Response, data []byte, err error)
+	// isVideoPost(path string, method Method) bool
+	// getUrl(name, path string, params Params) string
+	// addDebugInfo(res ResultService, response *http.Response) ResultService
+}
+
+type ParamsService interface {
+	Encode(writer io.Writer) (mime string, err error)
+	encodeFormUrlEncoded(writer io.Writer) (mime string, err error)
+	encodeMultipartForm(writer io.Writer) (mime string, err error)
+}
+
+type ResultService interface {
+	Get(field string) interface{}
+	Set(field string, value interface{})
+	GetField(fields ...string) interface{}
+	get(fields []string) interface{}
+	Decode(v interface{}) (err error)
+	DecodeField(field string, v interface{}) error
+	Err() error
+	Paging(session *SessionService) (*PagingResult, error)
+	Batch() (*BatchResult, error)
+	DebugInfo() *DebugInfo
+	decode(v reflect.Value, fullName string) error
+}
 
 // Holds facebook application information.
 type App struct {
@@ -72,7 +139,7 @@ type Result map[string]interface{}
 
 // Represents facebook API call result with paging information.
 type PagingResult struct {
-	session  *Session
+	session  *SessionService
 	paging   pagingData
 	previous string
 	next     string

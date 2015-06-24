@@ -55,27 +55,27 @@ var (
 //
 // If app id, app secret or access token is required in graph api, caller should
 // create a new facebook session through App instance instead.
-func Api(path string, method Method, params Params) (Result, error) {
+func Api(path string, method Method, params Params) (ResultService, error) {
 	return defaultSession.Api(path, method, params)
 }
 
 // Get is a short hand of Api(path, GET, params).
-func Get(path string, params Params) (Result, error) {
+func Get(path string, params Params) (ResultService, error) {
 	return Api(path, GET, params)
 }
 
 // Post is a short hand of Api(path, POST, params).
-func Post(path string, params Params) (Result, error) {
+func Post(path string, params Params) (ResultService, error) {
 	return Api(path, POST, params)
 }
 
 // Delete is a short hand of Api(path, DELETE, params).
-func Delete(path string, params Params) (Result, error) {
+func Delete(path string, params Params) (ResultService, error) {
 	return Api(path, DELETE, params)
 }
 
 // Put is a short hand of Api(path, PUT, params).
-func Put(path string, params Params) (Result, error) {
+func Put(path string, params Params) (ResultService, error) {
 	return Api(path, PUT, params)
 }
 

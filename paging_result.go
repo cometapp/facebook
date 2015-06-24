@@ -23,7 +23,7 @@ type pagingNavigator struct {
 	Next     string
 }
 
-func newPagingResult(session *Session, res Result) (*PagingResult, error) {
+func newPagingResult(session *SessionService, res Result) (*PagingResult, error) {
 	// quick check whether Result is a paging response.
 	if _, ok := res["data"]; !ok {
 		return nil, fmt.Errorf("current Result is not a paging response.")
@@ -95,7 +95,7 @@ func (pr *PagingResult) navigate(url *string) (noMore bool, err error) {
 
 	// add session information in paging url.
 	params := Params{}
-	pr.session.prepareParams(params)
+	((*pr.session).(*Session)).prepareParams(params)
 
 	if len(params) == 0 {
 		pagingUrl = *url
@@ -117,7 +117,7 @@ func (pr *PagingResult) navigate(url *string) (noMore bool, err error) {
 		return
 	}
 
-	res, err = pr.session.Request(request)
+	res, err = ((*pr.session).(*Session)).Request(request)
 
 	if err != nil {
 		return

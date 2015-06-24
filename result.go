@@ -104,6 +104,16 @@ func (res Result) Get(field string) interface{} {
 	return res.get(f)
 }
 
+func (res Result) Set(field string, value interface{}) {
+	if field == "" {
+		return
+	}
+
+	res[field] = value
+
+	return
+}
+
 // GetField gets a field from Result.
 //
 // Arguments are treated as keys to access value in Result.
@@ -281,7 +291,7 @@ func (res Result) Err() error {
 //             "next": "https://graph.facebook.com/..."
 //         }
 //     }
-func (res Result) Paging(session *Session) (*PagingResult, error) {
+func (res Result) Paging(session *SessionService) (*PagingResult, error) {
 	return newPagingResult(session, res)
 }
 

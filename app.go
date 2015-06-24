@@ -207,12 +207,13 @@ func (app *App) GetCode(accessToken string) (code string, err error) {
 }
 
 // Creates a session based on current App setting.
-func (app *App) Session(accessToken string) *Session {
-	return &Session{
+func (app *App) Session(accessToken string) *SessionService {
+	tmp := SessionService(&Session{
 		accessToken:          accessToken,
 		app:                  app,
 		enableAppsecretProof: app.EnableAppsecretProof,
-	}
+	})
+	return &tmp
 }
 
 // Creates a session from a signed request.
