@@ -306,7 +306,7 @@ func (session *Session) Inspect(token string) (result Result, err error) {
 		"input_token":  token,
 		"access_token": appAccessToken,
 	})
-	result = tmp.(Result)
+	result = *(tmp.(*Result))
 
 	if err != nil {
 		return
