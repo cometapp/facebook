@@ -232,7 +232,7 @@ func (session *Session) User() (id string, err error) {
 
 	var tmp ResultService
 	tmp, err = session.Api("/me", GET, Params{"fields": "id"})
-	result := tmp.(Result)
+	result := *(tmp.(*Result))
 
 	if err != nil {
 		return
@@ -259,7 +259,7 @@ func (session *Session) Validate() (err error) {
 	// result, err = session.Api("/me", GET, Params{"fields": "id"})
 	var tmp ResultService
 	tmp, err = session.Api("/me", GET, Params{"fields": "id"})
-	result := tmp.(Result)
+	result := *(tmp.(*Result))
 
 	if err != nil {
 		return
